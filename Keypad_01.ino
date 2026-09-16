@@ -1,10 +1,4 @@
-/*
-Filename: esp32_keypad_input.ino
-Description: Reads input from a 4x4 keypad and prints pressed keys to the Serial Monitor
-Author: www.oceanlabz.in
-Modification: 1/4/2025
-*/
- 
+
  
 #include <Keypad.h>
  
