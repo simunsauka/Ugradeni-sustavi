@@ -1,7 +1,7 @@
-// Pin na koji je spojen buzzer
+
 #define BUZZER_PIN 2
 
-// Definiranje nota (frekvencije u Hz)
+
 #define NOTE_C4  262
 #define NOTE_D4  294
 #define NOTE_E4  330
@@ -11,7 +11,7 @@
 #define NOTE_B4  494
 #define NOTE_C5  523
 
-int razmak = 500; // milisekunde
+int razmak = 500; 
 
 void setup() {
   pinMode(BUZZER_PIN, OUTPUT);
@@ -20,10 +20,10 @@ void setup() {
 }
 
 void loop() {
-  // Sviranje melodije
+  
   playMelody();
   
-  delay(2000); // Pauza između ponavljanja
+  delay(2000); 
 }
 
 void playMelody() {
