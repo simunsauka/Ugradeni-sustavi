@@ -1,12 +1,6 @@
-/*
-Kako koristiti:
-Postavi točan datum i vrijeme u kodu
-Učitaj na ESP32
-Nakon što se vrijeme postavi, zakomentiraj rtc.adjust() liniju (stavi // ispred)
-Učitaj ponovno - sada će RTC samo čitati vrijeme bez resetiranja
-*/
 
-// Date and time functions using a DS1307 RTC connected via I2C and Wire lib
+
+
 #include "RTClib.h"
 
 RTC_DS1307 rtc;
@@ -24,28 +18,17 @@ void setup () {
 
   if (! rtc.isrunning()) {
     Serial.println("RTC is NOT running, let's set the time!");
-    // When time needs to be set on a new device, or after a power loss, the
-    // following line sets the RTC to the date & time this sketch was compiled
-  //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-    // This line sets the RTC with an explicit date & time, for example to set
-    // January 21, 2014 at 3am you would call:
-    //rtc.adjust(DateTime(2026, 5, 4, 10, 38, 0));
+    
   }
 
-  // When time needs to be re-set on a previously configured device, the
-  // following line sets the RTC to the date & time this sketch was compiled
-  //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-  // This line sets the RTC with an explicit date & time, for example to set
-  // January 21, 2014 at 3am you would call:
-  //rtc.adjust(DateTime(2026, 5, 4, 10, 42, 0));
+ 
 }
 
 void loop () {
-  // Get the current time from the RTC
+ 
   DateTime now = rtc.now();
   
-  // Getting each time field in individual variables
-  // And adding a leading zero when needed;
+ 
   String yearStr = String(now.year(), DEC);
   String monthStr = (now.month() < 10 ? "0" : "") + String(now.month(), DEC);
   String dayStr = (now.day() < 10 ? "0" : "") + String(now.day(), DEC);
@@ -54,10 +37,10 @@ void loop () {
   String secondStr = (now.second() < 10 ? "0" : "") + String(now.second(), DEC);
   String dayOfWeek = daysOfTheWeek[now.dayOfTheWeek()];
 
-  // Complete time string
+  
   String formattedTime = dayOfWeek + ", " + yearStr + "-" + monthStr + "-" + dayStr + " " + hourStr + ":" + minuteStr + ":" + secondStr;
 
-  // Print the complete formatted time
+  
   Serial.println(formattedTime);
 
   Serial.println();
