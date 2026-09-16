@@ -47,14 +47,14 @@ void loop() {
     
     display.clearDisplay();
     
-    // GORNJI ŽUTI DIO (0-16 piksela)
+    
     display.setTextSize(2);
     
     char tekst[] = "ZATVORENO";
     display.setCursor(10, 0);
     display.println(tekst);
     
-    // DONJI PLAVI DIO (17-63 piksela)
+   
     display.setTextSize(3);
 
     display.setCursor(0, 30);
