@@ -12,15 +12,15 @@ char keys[ROWS][COLS] = {
   {'*','0','#','D'}
 };
  
-byte rowPins[ROWS] = {13, 12, 14, 27}; // Connect to R1-R4
-byte colPins[COLS] = {26, 25, 33, 32}; // Connect to C1-C4
+byte rowPins[ROWS] = {13, 12, 14, 27}; 
+byte colPins[COLS] = {26, 25, 33, 32}; 
  
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
  
 void setup() {
   Serial.begin(115200);
-  keypad.setHoldTime(200); 		// minimalno vrijeme pritiska tipke
-  keypad.setDebounceTime(50); 	// vrijeme eliminiranja treperenja
+  keypad.setHoldTime(200); 		
+  keypad.setDebounceTime(50); 	
 
 }
  
