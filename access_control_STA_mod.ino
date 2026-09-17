@@ -1,27 +1,4 @@
-/*
- * ============================================================
- *  SUSTAV KONTROLE PRISTUPA – DOIT ESP32 DEVKIT V1
- * ============================================================
- *  Hardver:
- *    Relej          → GPIO15
- *    Buzzer         → GPIO2
- *    Crvena LED     → GPIO16
- *    Zelena LED     → GPIO17
- *    RTC DS1307     → SDA=GPIO21, SCL=GPIO22
- *    OLED 0.96"     → SDA=GPIO21, SCL=GPIO22  (adresa 0x3C)
- *    SD kartica     → CS=GPIO5, SCK=GPIO18, MISO=GPIO19, MOSI=GPIO23
- *    Tipkovnica 4x4 → R1=13,R2=12,R3=14,R4=27 | C1=26,C2=25,C3=33,C4=32
- *
- *  Potrebne knjižnice (Library Manager):
- *    - RTClib          (Adafruit)
- *    - Adafruit SSD1306
- *    - Adafruit GFX Library
- *    - Keypad          (Mark Stanley, Alexander Brevig)
- *    - SD              (ugrađena u Arduino/ESP32 core)
- *    - WiFi            (ugrađena u ESP32 core)
- *    - WebServer       (ugrađena u ESP32 core)
- * ============================================================
- */
+
 
 #include <Wire.h>
 #include <RTClib.h>
@@ -33,13 +10,12 @@
 #include <WiFi.h>
 #include <WebServer.h>
 
-// ─── WiFi postavke ───────────────────────────────────────────
+//WiFi postavke
 const char* WIFI_SSID     = "Kabinet_39";
 const char* WIFI_PASSWORD = "el-robot2018";
 
-// ─── PIN-ovi korisnika ────────────────────────────────────────
-// Format: { "KorisnickoIme", "PIN" }
-// Dodajte/izmijenite po potrebi
+//PIN-ovi korisnika
+
 struct User {
   const char* name;
   const char* pin;
@@ -54,27 +30,27 @@ const User USERS[] = {
 };
 const int USER_COUNT = sizeof(USERS) / sizeof(USERS[0]);
 
-// ─── Maksimalni broj neuspjelih pokušaja ─────────────────────
+//Maksimalni broj neuspjelih pokušaja
 const int MAX_FAILED = 3;
-const unsigned long LOCKOUT_MS = 30000; // 30 sekundi blokiranja
+const unsigned long LOCKOUT_MS = 30000; 
 
-// ─── GPIO definicije ─────────────────────────────────────────
+// GPIO definicije
 #define PIN_RELAY     15
 #define PIN_BUZZER    2
 #define PIN_LED_RED   16
 #define PIN_LED_GREEN 17
 #define PIN_SD_CS     5
 
-// ─── OLED display ─────────────────────────────────────────────
+//OLED display
 #define OLED_WIDTH  128
 #define OLED_HEIGHT 64
 #define OLED_ADDR   0x3C
 Adafruit_SSD1306 display(OLED_WIDTH, OLED_HEIGHT, &Wire, -1);
 
-// ─── RTC ─────────────────────────────────────────────────────
+// RTC
 RTC_DS1307 rtc;
 
-// ─── Tipkovnica 4x4 ──────────────────────────────────────────
+//Tipkovnica 4x4
 const byte ROWS = 4;
 const byte COLS = 4;
 char keys[ROWS][COLS] = {
@@ -87,10 +63,10 @@ byte rowPins[ROWS] = {13, 12, 14, 27};
 byte colPins[COLS] = {26, 25, 33, 32};
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
-// ─── Web server ───────────────────────────────────────────────
+// Web server
 WebServer server(80);
 
-// ─── Log evidencija (zadnjih N zapisa u RAM-u za web prikaz) ──
+// Log evidencija 
 #define LOG_BUFFER_SIZE 20
 struct LogEntry {
   char timestamp[20];
@@ -102,7 +78,7 @@ LogEntry logBuffer[LOG_BUFFER_SIZE];
 int logHead = 0;
 int logCount = 0;
 
-// ─── Stanje sustava ──────────────────────────────────────────
+//Stanje sustava
 String inputPin = "";
 int failedAttempts = 0;
 bool isLockedOut = false;
@@ -111,12 +87,12 @@ bool doorOpen = false;
 unsigned long doorOpenTime = 0;
 const unsigned long DOOR_OPEN_MS = 5000; // vrata otvorena 5 sekundi
 
-// ─── Globalni status string za OLED/web ──────────────────────
+//Globalni status string za OLED/web
 String systemStatus = "Spreman";
 
-// ============================================================
+
 //  POMOĆNE FUNKCIJE
-// ============================================================
+
 
 String getTimestamp() {
   if (!rtc.isrunning()) return "0000-00-00 00:00:00";
@@ -150,8 +126,8 @@ void addLog(const char* user, bool success, const char* note) {
   }
 }
 
-// ─── OLED ────────────────────────────────────────────────────
-// Ispiši tekst horizontalno centriran na zadanom retku (y koordinata)
+//OLED
+
 void oledPrintCentered(const String& text, int y, uint8_t textSize = 1) {
   display.setTextSize(textSize);
   int16_t charW = 6 * textSize; // SSD1306 font: 6px po znaku pri size=1
@@ -167,7 +143,7 @@ void oledClear() {
   display.setCursor(0, 0);
 }
 
-// Prikazuje 4 retka; prvi redak (naslov) uvijek je centriran
+
 void oledShow(const String& line1,
               const String& line2 = "",
               const String& line3 = "",
@@ -175,10 +151,10 @@ void oledShow(const String& line1,
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
 
-  // Redak 1 – centriran naslov
+ 
   oledPrintCentered(line1, 0);
 
-  // Redak 2‑4 – lijevo poravnanje
+
   display.setTextSize(1);
   display.setCursor(0, 16); display.println(line2);
   display.setCursor(0, 32); display.println(line3);
@@ -194,7 +170,7 @@ void showReadyScreen() {
            ts.substring(0,16));
 }
 
-// ─── Buzzer ──────────────────────────────────────────────────
+//Buzzer
 void beepOK() {
   tone(PIN_BUZZER, 1000, 200);
   delay(250);
@@ -215,11 +191,11 @@ void beepKeypress() {
   noTone(PIN_BUZZER);
 }
 
-// ─── LED ─────────────────────────────────────────────────────
+// LED
 void ledGreen(bool on) { digitalWrite(PIN_LED_GREEN, on ? HIGH : LOW); }
 void ledRed(bool on)   { digitalWrite(PIN_LED_RED,   on ? HIGH : LOW); }
 
-// ─── Relej (brava) ────────────────────────────────────────────
+// Relej (brava)
 void unlockDoor() {
   digitalWrite(PIN_RELAY, HIGH); // relej aktiviran = brava otvorena
   doorOpen = true;
@@ -235,7 +211,7 @@ void lockDoor() {
   ledRed(true);    // vrata zaključana → crvena UPALJENA
 }
 
-// ─── Provjera PIN-a ──────────────────────────────────────────
+// Provjera PIN-a
 int checkPin(const String& pin) {
   for (int i = 0; i < USER_COUNT; i++) {
     if (pin == String(USERS[i].pin)) return i;
@@ -243,7 +219,7 @@ int checkPin(const String& pin) {
   return -1;
 }
 
-// ─── Autentikacija ────────────────────────────────────────────
+//Autentikacija
 void handleAccessGranted(int userIdx) {
   failedAttempts = 0;
   systemStatus = String("OK: ") + USERS[userIdx].name;
@@ -297,7 +273,7 @@ void handleAccessDenied(const String& triedPin) {
   ledRed(false);
 }
 
-// ─── Web server handleri ──────────────────────────────────────
+//Web server handleri
 void handleWebRoot() {
   String ts = getTimestamp();
 
@@ -380,7 +356,7 @@ void handleWebRoot() {
 }
 
 void handleWebLog() {
-  // Vraća CSV log sa SD kartice
+  
   File f = SD.open("/log.csv", FILE_READ);
   if (!f) {
     server.send(404, "text/plain", "Log datoteka nije pronađena.");
@@ -398,9 +374,9 @@ void handleWebNotFound() {
   server.send(404, "text/plain", "404 – Stranica nije pronađena.");
 }
 
-// ============================================================
+
 //  SETUP
-// ============================================================
+
 void setup() {
   Serial.begin(115200);
   Serial.println("\n=== ESP32 Kontrola Pristupa – START ===");
@@ -502,9 +478,9 @@ void setup() {
   Serial.println("[OK] Sustav spreman.");
 }
 
-// ============================================================
+
 //  LOOP
-// ============================================================
+
 void loop() {
   server.handleClient();
 
@@ -532,7 +508,7 @@ void loop() {
     }
   }
 
-  // ── Automatsko zatvaranje brave ───────────────────────────
+  // Automatsko zatvaranje brave
   if (doorOpen && (millis() - doorOpenTime >= DOOR_OPEN_MS)) {
     lockDoor(); // uključuje crvenu, gasi zelenu
     systemStatus = "Spreman";
@@ -579,7 +555,7 @@ void loop() {
     if (inputPin.length() < 8) { // max 8 znakova
       inputPin += key;
     }
-    // Prikaži unesene znakove
+    
     oledShow("=== PRISTUP ===",
              "Unesite PIN:",
              inputPin,
